@@ -13,7 +13,7 @@ connectDB()
   })
   //app.listen(process.env.PORT || 8000) starts the server only after MongoDB is connected.
   .catch((error) => {
-    console.log("MONGO DB connection failed: ", error);
+    console.log("MONGO DB connection failed..the error is :: ", error);
   });
 
 // an async function that returns a Promise.
