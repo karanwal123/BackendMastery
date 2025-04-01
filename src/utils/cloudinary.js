@@ -22,6 +22,7 @@ const uploadOnCloudinary = async (localFilePath) => {
 
     return response; // Return the full response object
   } catch (error) {
+    fs.unlinkSync(localFilePath); // Delete the file if upload fails
     console.error("Error uploading to Cloudinary:", error);
     return null;
   }
@@ -29,10 +30,10 @@ const uploadOnCloudinary = async (localFilePath) => {
 
 export default uploadOnCloudinary;
 
-// cloudinary.v2.uploader.upload(
-//   "https://upload.wikimedia.org/wikipedia/commons/a/ae/Olympic_flag.jpg",
-//   { public_id: "olympic_flag" },
-//   function (error, result) {
-//     console.log(result);
-//   }
-// );
+cloudinary.v2.uploader.upload(
+  "https://upload.wikimedia.org/wikipedia/commons/a/ae/Olympic_flag.jpg",
+  { public_id: "olympic_flag" },
+  function (error, result) {
+    console.log(result);
+  }
+);
