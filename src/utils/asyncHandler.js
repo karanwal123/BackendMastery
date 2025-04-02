@@ -1,11 +1,12 @@
 import { error } from "console";
 
-const asyncHandler = (requestHandler)=>{
-    (req,res,next) =>{
-        Promise.resolve(requestHandler(req,res,next)).catch((error)=>next(error));
-    }
-}
-
+const asyncHandler = (requestHandler) => {
+  return (req, res, next) => {
+    Promise.resolve(requestHandler(req, res, next)).catch((error) =>
+      next(error)
+    );
+  };
+};
 
 //higher-order function that helps handle errors in asynchronous Express route handlers.
 
