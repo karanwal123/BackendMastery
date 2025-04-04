@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
-import { User } from "../models/user.model.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { User } from "../models/user.models.js";
+import  uploadOnCloudinary  from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
 const registerUser = asyncHandler(async (req, res) => {
@@ -70,12 +70,12 @@ const registerUser = asyncHandler(async (req, res) => {
   );
   //"-password -refreshToken" excludes the password and refreshToken fields from the result.
 
-  if(!createdUser) {
-    throw new ApiError(500, "Error creating user");//(Internal Server Error)
+  if (!createdUser) {
+    throw new ApiError(500, "Error creating user"); //(Internal Server Error)
   }
-  return res.status(201).json(
-    new ApiResponse(200, createdUser, "User created successfully")
-  );
+  return res
+    .status(201)
+    .json(new ApiResponse(200, createdUser, "User created successfully"));
 });
 
 export { registerUser };
