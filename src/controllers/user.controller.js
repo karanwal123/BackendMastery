@@ -1,62 +1,53 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.models.js";
-import  uploadOnCloudinary  from "../utils/cloudinary.js";
+import uploadOnCloudinary from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
 const registerUser = asyncHandler(async (req, res) => {
   console.log("registerUser");
-  res.status(200).json({ message: "User registered successfully" });
 
-  //   1. get user details from FRONTEND → (username,password,fullname,email)
-  // 2. validation → (check if the email entered by user ..is real or fake) (fields are not empty)
-  // 3. check if user already exists
-  // 4. check for images → check for AVATAR
-  // 5. upload them to Cloudinary
-  // 6. create user object → create entry in db
-  // 7. remove password and refresh token field from response
-  // 8. check for user creation
-  // 9. return response
-
+  // 1. Get user details from the request body
   const { fullName, email, username, password } = req.body;
-  console.log("email :", email);
-  //The .trim() method removes leading and trailing spaces from a string.
+  console.log("email:", email);
 
+  // 2. Validate that all required fields are provided
   if (
     [fullName, email, username, password].some((field) => field?.trim() === "")
   ) {
     throw new ApiError(400, "All fields are required");
   }
 
-  //     //if (fullName === "") {
-  //   return res.status(400).json({ error: "Full name is required" });
-  // }
-
-  const existedUser = User.findOne({
-    $or: [{ username }, { email }],
-  });
-  //.findOne() is a Mongoose query method that returns one document that matches the criteria.
-  //$or is a MongoDB operator that finds at least one matching condition.
-
+  // 3. Check if a user with the same username or email already exists
+  const existedUser = await User.findOne({ $or: [{ username }, { email }] });
   if (existedUser) {
     throw new ApiError(409, "User with same email or username already exists");
   }
 
-  const avatarLocalPath = req?.files?.avatar[0]?.path;
-  //currently stored on SERVER ..not on cloudinary
-  //req.files is an object containing uploaded files.
+  // 4. Get file paths for avatar and cover image (if provided)
+  const avatarLocalPath =
+    req?.files?.avatar && req.files.avatar.length > 0
+      ? req.files.avatar[0].path
+      : null;
+  const coverImageLocalPath =
+    req?.files?.coverImage && req.files.coverImage.length > 0
+      ? req.files.coverImage[0].path
+      : null;
 
-  const coverImageLocalPath = req?.files?.coverImage[0]?.path;
-
+  // 5. Check that at least one image is uploaded
   if (!avatarLocalPath && !coverImageLocalPath) {
     throw new ApiError(400, "Please upload avatar or cover image");
   }
+
+  // 6. Upload images to Cloudinary
   const avatar = await uploadOnCloudinary(avatarLocalPath);
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
   if (!avatar) {
     throw new ApiError(400, "Please upload avatar..it is REQUIRED");
   }
+
+  // 7. Create user in the database
   const user = await User.create({
     fullName,
     avatar: avatar.url,
@@ -65,14 +56,16 @@ const registerUser = asyncHandler(async (req, res) => {
     username: username.toLowerCase(),
     password,
   });
+
+  // 8. Retrieve the created user, excluding sensitive fields
   const createdUser = await User.findById(user._id).select(
     "-password -refreshToken"
   );
-  //"-password -refreshToken" excludes the password and refreshToken fields from the result.
-
   if (!createdUser) {
-    throw new ApiError(500, "Error creating user"); //(Internal Server Error)
+    throw new ApiError(500, "Error creating user");
   }
+
+  // 9. Return success response
   return res
     .status(201)
     .json(new ApiResponse(200, createdUser, "User created successfully"));
