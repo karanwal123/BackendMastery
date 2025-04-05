@@ -19,7 +19,8 @@ const uploadOnCloudinary = async (localFilePath) => {
     });
 
     console.log("File has been uploaded to Cloudinary:", response.secure_url);
-
+    fs.unlinkSync(localFilePath); // Delete the file after upload
+    //synchronous delete file -> we dont want it to being deleted in background
     return response; // Return the full response object
   } catch (error) {
     fs.unlinkSync(localFilePath); // Delete the file if upload fails
