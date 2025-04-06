@@ -4,6 +4,23 @@ import { User } from "../models/user.models.js";
 import uploadOnCloudinary from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
+const generateAccessAndRefreshTokens = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
+
+    return { accessToken, refreshToken };
+  } catch (error) {
+    throw new ApiError(
+      500,
+      "Something went wrong while generating referesh and access token"
+    );
+  }
+};
+
 const registerUser = asyncHandler(async (req, res) => {
   console.log("registerUser");
 
@@ -72,4 +89,50 @@ const registerUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, createdUser, "User created successfully"));
 });
 
-export { registerUser };
+const loginUser = asyncHandler(async (req, res) => {
+  //first we can ask the user if they already have an account or not
+  //to check : validate username/email :: acc credentials
+  //if not already -> throw them to register page
+  //if they are -> ask for credentials -> username and password
+  const { email, username, password } = req.body;
+  if (!username || !email) {
+    throw new ApiError(400, "atleast type in username or email");
+  }
+  //check again
+  //now we will learn mongo  db operators
+  const user = await User.findOne({
+    $or: [{ username }, { email }],
+  });
+  if (!user) {
+    throw new ApiError(404, "user does not exist");
+  }
+  // userSchema.methods.comparePassword = async function (password) {
+  //   return await bcrypt.compare(password, this.password);
+  // };
+  const isPasswordValid = await user.comparePassword(password);
+  if (!isPasswordValid) {
+    throw new ApiError(401, "Invalid User credentials");
+  }
+  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+    user._id
+  );
+  const loggedInUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+    // This part tells Mongoose to exclude the password and refreshToken fields from the result. The minus sign (-) indicates that these fields should be omitted.
+  );
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(new ApiResponse(200, {user: loggedInUser,accessToken, refreshToken}, "User logged in successfully"));
+});
+
+const logoutUser = asyncHandler(async (req, res) => {})
+
+export { registerUser, loginUser };
