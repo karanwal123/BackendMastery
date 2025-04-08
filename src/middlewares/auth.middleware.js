@@ -1,9 +1,11 @@
 //The purpose of this middleware is to verify a JSON Web Token (JWT) from either a cookie or the Authorization header.
-import { ApiError } from "../utils/ApiError";
-import { asyncHandler } from " .. /utils/asyncHandler";
-import { User } from "../models/user.models";
+import { ApiError } from "../utils/ApiError.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { User } from "../models/user.models.js";
+import jwt from "jsonwebtoken";
 
-export const verifyJWT = asyncHandler(async (req, res, next) => {
+//By convention, people often name an unused parameter _ (a single underscore) to signal “this argument is intentionally ignored.”
+export const verifyJWT = asyncHandler(async (req, _, next) => {
   try {
     const token =
       req.cookies?.accessToken ||
@@ -23,7 +25,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
     //   exp: 1680003600  // expiration timestamp
     // }
 
-    const user = await User.findById(decodedToken?._id).select(
+    const user = await User.findById(decodedToken.id).select(
       "-password -refreshToken"
     );
 
@@ -34,6 +36,5 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
     next();
   } catch (error) {
     throw new ApiError(401, "invalid access token");
-
   }
 });
