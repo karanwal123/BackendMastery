@@ -104,14 +104,14 @@ const loginUser = asyncHandler(async (req, res) => {
     $or: [{ username }, { email }],
   });
   if (!user) {
-    throw new ApiError(404, "user does not exist");
+    throw new ApiError(404, "user does not exist :: Invalid username/email");
   }
   // userSchema.methods.comparePassword = async function (password) {
   //   return await bcrypt.compare(password, this.password);
   // };
   const isPasswordValid = await user.comparePassword(password);
   if (!isPasswordValid) {
-    throw new ApiError(401, "Invalid User credentials");
+    throw new ApiError(401, "Invalid User credentials :: Invalid password");
   }
   const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
     user._id
@@ -134,7 +134,7 @@ const loginUser = asyncHandler(async (req, res) => {
       new ApiResponse(
         200,
         { user: loggedInUser, accessToken, refreshToken },
-        "User logged in successfully"
+        "Success :: User logged in successfully"
       )
     );
 });
