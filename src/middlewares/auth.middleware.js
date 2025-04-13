@@ -15,7 +15,7 @@ export const verifyJWT = asyncHandler(async (req, _, next) => {
       throw new ApiError(401, "Unauthorized Request");
       //return res.status(401).json({ message: "Unauthorized Request" });
     }
-    const decodedToken = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
     // This is usually an object containing the data that was encoded when the token was created—such as the user's ID
     //if the token is valid, jwt.verify returns the decoded payload of the token.
     //   //{
